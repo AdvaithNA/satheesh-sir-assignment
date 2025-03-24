@@ -1,0 +1,119 @@
+{% extends "blog/base.html" %}
+
+{% block title %}{{ post.title }} - Mini Blog{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Post Content -->
+        <article class="card">
+            {% if post.image %}
+                <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}">
+            {% endif %}
+            <div class="card-body">
+                <h1 class="card-title mb-3">{{ post.title }}</h1>
+                <div class="post-meta mb-4">
+                    <small>
+                        Posted by {{ post.author.get_full_name|default:post.author.username }}
+                        in <a href="{% url 'blog:category_posts' post.category.slug %}" class="text-decoration-none">{{ post.category.name }}</a>
+                        on {{ post.published_at|date:"F j, Y" }}
+                    </small>
+                </div>
+                
+                <div class="post-content">
+                    {{ post.content|linebreaks }}
+                </div>
+
+                {% if user == post.author %}
+                    <div class="mt-4">
+                        <a href="{% url 'blog:post_update' post.slug %}" class="btn btn-primary me-2">Edit Post</a>
+                        <a href="{% url 'blog:post_delete' post.slug %}" class="btn btn-danger">Delete Post</a>
+                    </div>
+                {% endif %}
+            </div>
+        </article>
+
+        <!-- Comments Section -->
+        <div class="comment-section mt-5">
+            <h3 class="mb-4">Comments</h3>
+            
+            {% if user.is_authenticated %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form method="post" action="{% url 'blog:add_comment' post.slug %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ comment_form.content }}
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Comment</button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Please <a href="{% url 'blog:login' %}">login</a> to add a comment.
+                </div>
+            {% endif %}
+
+            {% if post.comments.all %}
+                {% for comment in post.comments.all %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    {{ comment.author.get_full_name|default:comment.author.username }}
+                                </h6>
+                                <small class="text-muted">
+                                    {{ comment.created_at|date:"F j, Y, P" }}
+                                </small>
+                            </div>
+                            <p class="card-text">{{ comment.content|linebreaks }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    No comments yet. Be the first to comment!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">About the Author</h5>
+            </div>
+            <div class="card-body">
+                <h6>{{ post.author.get_full_name|default:post.author.username }}</h6>
+                <p class="mb-0">
+                    Member since {{ post.author.date_joined|date:"F Y" }}
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Share this Post</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-around">
+                    <a href="https://twitter.com/intent/tweet?text={{ post.title|urlencode }}&url={{ request.build_absolute_uri }}" 
+                       target="_blank" class="btn btn-outline-primary">
+                        Twitter
+                    </a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" 
+                       target="_blank" class="btn btn-outline-primary">
+                        Facebook
+                    </a>
+                    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri|urlencode }}&title={{ post.title|urlencode }}" 
+                       target="_blank" class="btn btn-outline-primary">
+                        LinkedIn
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
